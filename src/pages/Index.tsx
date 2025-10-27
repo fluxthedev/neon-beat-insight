@@ -78,10 +78,10 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <DashboardHeader />
       
-      <main className="container mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-3 gap-6">
+      <main className="container mx-auto px-4 sm:px-6 py-4 sm:py-8">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Left column - Upload and Track List */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-4 sm:space-y-6">
             <FileUpload onFilesSelected={handleFilesSelected} />
             <TrackList
               tracks={tracks}
@@ -96,14 +96,14 @@ const Index = () => {
             {selectedTrack ? (
               <TrackAnalyzer track={selectedTrack} />
             ) : (
-              <div className="h-full min-h-[500px] rounded-lg border-2 border-dashed border-border bg-card/50 flex flex-col items-center justify-center text-center p-8">
+              <div className="h-full min-h-[300px] sm:min-h-[500px] rounded-lg border-2 border-dashed border-border bg-card/50 flex flex-col items-center justify-center text-center p-4 sm:p-8">
                 <div className="p-4 rounded-full bg-muted mb-4">
                   <Activity className="h-12 w-12 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">
                   Select a track to analyze
                 </h3>
-                <p className="text-muted-foreground max-w-md">
+                <p className="text-sm sm:text-base text-muted-foreground max-w-md">
                   Upload audio files and select them from the queue to view detailed 
                   analysis including tempo, key detection, and waveform visualization.
                 </p>

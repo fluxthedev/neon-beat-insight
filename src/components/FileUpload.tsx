@@ -85,27 +85,27 @@ export const FileUpload = ({ onFilesSelected }: FileUploadProps) => {
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
       />
       
-      <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+      <div className="flex flex-col items-center justify-center py-8 sm:py-12 px-4 sm:px-6 text-center">
         <div className={`
-          mb-4 rounded-full p-4 transition-all duration-300
+          mb-3 sm:mb-4 rounded-full p-3 sm:p-4 transition-all duration-300
           ${isDragging ? 'bg-primary/20 shadow-glow-cyan' : 'bg-muted'}
         `}>
           <Upload 
-            className={`h-8 w-8 transition-colors duration-300 ${
+            className={`h-6 w-6 sm:h-8 sm:w-8 transition-colors duration-300 ${
               isDragging ? 'text-primary' : 'text-muted-foreground'
             }`} 
           />
         </div>
         
-        <h3 className="text-lg font-semibold mb-2">
+        <h3 className="text-base sm:text-lg font-semibold mb-2">
           Drop your tracks here
         </h3>
         
-        <p className="text-sm text-muted-foreground mb-1">
+        <p className="text-xs sm:text-sm text-muted-foreground mb-1">
           or click to browse
         </p>
         
-        <p className="text-xs text-muted-foreground">
+        <p className="text-[10px] sm:text-xs text-muted-foreground">
           Supports MP3, WAV, FLAC • Max 50 files
         </p>
       </div>

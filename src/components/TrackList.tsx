@@ -24,22 +24,23 @@ export const TrackList = ({ tracks, onRemove, onSelect, selectedId }: TrackListP
 
   return (
     <div className="rounded-lg border border-border bg-card">
-      <div className="p-4 border-b border-border">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Music2 className="h-5 w-5 text-primary" />
-          Track Queue
-          <span className="text-sm text-muted-foreground ml-auto">
+      <div className="p-3 sm:p-4 border-b border-border">
+        <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+          <Music2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          <span className="hidden sm:inline">Track Queue</span>
+          <span className="sm:hidden">Tracks</span>
+          <span className="text-xs sm:text-sm text-muted-foreground ml-auto">
             {tracks.length} / 50
           </span>
         </h2>
       </div>
       
-      <ScrollArea className="h-[400px]">
+      <ScrollArea className="h-[300px] sm:h-[400px]">
         <div className="p-2 space-y-1">
           {tracks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-              <Music2 className="h-12 w-12 mb-3 opacity-50" />
-              <p className="text-sm">No tracks uploaded yet</p>
+            <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center text-muted-foreground">
+              <Music2 className="h-10 w-10 sm:h-12 sm:w-12 mb-2 sm:mb-3 opacity-50" />
+              <p className="text-xs sm:text-sm">No tracks uploaded yet</p>
             </div>
           ) : (
             tracks.map((track) => (
@@ -47,7 +48,7 @@ export const TrackList = ({ tracks, onRemove, onSelect, selectedId }: TrackListP
                 key={track.id}
                 onClick={() => onSelect(track.id)}
                 className={`
-                  group flex items-center gap-3 p-3 rounded-lg cursor-pointer
+                  group flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg cursor-pointer
                   transition-all duration-200
                   ${selectedId === track.id 
                     ? 'bg-primary/20 border border-primary' 
@@ -56,17 +57,17 @@ export const TrackList = ({ tracks, onRemove, onSelect, selectedId }: TrackListP
                 `}
               >
                 <div className={`
-                  p-2 rounded-md transition-colors duration-200
+                  p-1.5 sm:p-2 rounded-md transition-colors duration-200
                   ${selectedId === track.id ? 'bg-primary/30' : 'bg-muted'}
                 `}>
-                  <Music2 className={`h-4 w-4 ${
+                  <Music2 className={`h-3 w-3 sm:h-4 sm:w-4 ${
                     selectedId === track.id ? 'text-primary' : 'text-muted-foreground'
                   }`} />
                 </div>
                 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{track.name}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs sm:text-sm font-medium truncate">{track.name}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
                     {formatFileSize(track.size)}
                   </p>
                 </div>
@@ -78,9 +79,9 @@ export const TrackList = ({ tracks, onRemove, onSelect, selectedId }: TrackListP
                     e.stopPropagation();
                     onRemove(track.id);
                   }}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive"
+                  className="opacity-0 sm:group-hover:opacity-100 sm:opacity-0 opacity-100 transition-opacity hover:text-destructive h-7 w-7 sm:h-9 sm:w-9"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </div>
             ))
