@@ -21,12 +21,12 @@ interface TrackData {
 }
 
 // Mock analysis function - in production, this would call your API
-const analyzeTrack = (file: File): TrackData => {
+const analyzeTrack = (file: File, trackId: string): TrackData => {
   const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const modes = ['maj', 'min'];
   
   return {
-    id: Math.random().toString(36).substr(2, 9),
+    id: trackId,
     name: file.name.replace(/\.[^/.]+$/, ''),
     tempo: Math.floor(Math.random() * (140 - 100) + 100),
     key: `${keys[Math.floor(Math.random() * keys.length)]} ${modes[Math.floor(Math.random() * modes.length)]}`,
@@ -49,9 +49,14 @@ const Index = () => {
     
     setTracks(prev => [...prev, ...newTracks]);
     
-    // Simulate analysis
-    const analyzed = files.map(analyzeTrack);
+    // Simulate analysis with matching IDs
+    const analyzed = files.map((file, index) => analyzeTrack(file, newTracks[index].id));
     setAnalyzedTracks(prev => [...prev, ...analyzed]);
+    
+    // Auto-select the first uploaded track if none selected
+    if (!selectedTrackId && newTracks.length > 0) {
+      setSelectedTrackId(newTracks[0].id);
+    }
     
     toast({
       title: "Tracks uploaded",
