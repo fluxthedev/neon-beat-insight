@@ -18,19 +18,41 @@ interface TrackData {
   tempo: number;
   key: string;
   energy: number;
+  waveform: number[];
 }
 
 // Mock analysis function - in production, this would call your API
+const generateWaveform = (seedString: string, length = 120): number[] => {
+  let seed = 0;
+
+  for (let i = 0; i < seedString.length; i++) {
+    seed = (seed << 5) - seed + seedString.charCodeAt(i);
+    seed |= 0;
+  }
+
+  const waveform: number[] = [];
+  let current = Math.abs(seed) || 1;
+
+  for (let i = 0; i < length; i++) {
+    current = (current * 1664525 + 1013904223) % 4294967296;
+    const normalized = (current & 0xffffffff) / 0xffffffff;
+    waveform.push(Number(normalized.toFixed(4)));
+  }
+
+  return waveform;
+};
+
 const analyzeTrack = (file: File, trackId: string): TrackData => {
   const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   const modes = ['maj', 'min'];
-  
+
   return {
     id: trackId,
     name: file.name.replace(/\.[^/.]+$/, ''),
     tempo: Math.floor(Math.random() * (140 - 100) + 100),
     key: `${keys[Math.floor(Math.random() * keys.length)]} ${modes[Math.floor(Math.random() * modes.length)]}`,
     energy: Math.floor(Math.random() * (95 - 60) + 60),
+    waveform: generateWaveform(`${file.name}-${trackId}`),
   };
 };
 
