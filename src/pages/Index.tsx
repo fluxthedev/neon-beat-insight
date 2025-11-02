@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Activity } from "lucide-react";
 import { FileUpload } from "@/components/FileUpload";
 import { TrackAnalyzer } from "@/components/TrackAnalyzer";
@@ -22,6 +22,17 @@ const Index = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const { toast } = useToast();
+  const tracksRef = useRef<Track[]>([]);
+
+  const updateTracks = useCallback((updater: (prev: Track[]) => Track[]) => {
+    setTracks(prev => {
+      const next = updater(prev);
+      tracksRef.current = next;
+      return next;
+    });
+  }, []);
+
+  tracksRef.current = tracks;
 
   const handleFilesSelected = async (files: File[]) => {
     if (files.length === 0) {
@@ -34,7 +45,7 @@ const Index = () => {
       size: file.size,
     }));
 
-    setTracks(prev => [...prev, ...newTracks]);
+    updateTracks(prev => [...prev, ...newTracks]);
 
     setIsAnalyzing(true);
     setAnalysisError(null);
@@ -62,12 +73,29 @@ const Index = () => {
       );
 
       const successfulAnalyses = analyses.filter((analysis): analysis is TrackData => Boolean(analysis));
+      const activeTrackIds = new Set(tracksRef.current.map(track => track.id));
+      const filteredAnalyses = successfulAnalyses.filter(analysis => activeTrackIds.has(analysis.id));
 
-      if (successfulAnalyses.length > 0) {
-        setAnalyzedTracks(prev => [...prev, ...successfulAnalyses]);
+      let appendedCount = 0;
+
+      if (filteredAnalyses.length > 0) {
+        setAnalyzedTracks(prev => {
+          const existingIds = new Set(prev.map(track => track.id));
+          const deduped = filteredAnalyses.filter(analysis => !existingIds.has(analysis.id));
+          appendedCount = deduped.length;
+
+          if (deduped.length === 0) {
+            return prev;
+          }
+
+          return [...prev, ...deduped];
+        });
+      }
+
+      if (appendedCount > 0) {
         toast({
           title: "Tracks analyzed",
-          description: `${successfulAnalyses.length} track${successfulAnalyses.length > 1 ? 's' : ''} ready for review`,
+          description: `${appendedCount} track${appendedCount > 1 ? 's' : ''} ready for review`,
         });
       }
 
@@ -86,7 +114,7 @@ const Index = () => {
   };
 
   const handleRemoveTrack = (id: string) => {
-    setTracks(prev => prev.filter(t => t.id !== id));
+    updateTracks(prev => prev.filter(t => t.id !== id));
     setAnalyzedTracks(prev => prev.filter(t => t.id !== id));
     if (selectedTrackId === id) {
       setSelectedTrackId(undefined);

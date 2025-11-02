@@ -59,9 +59,14 @@ const estimateTempo = (data: Float32Array, sampleRate: number) => {
     return 0;
   }
 
-  const targetSampleRate = 5000;
+  const targetSampleRate = 1000;
   const step = Math.max(1, Math.floor(sampleRate / targetSampleRate));
   const filteredLength = Math.floor(data.length / step);
+
+  if (filteredLength === 0) {
+    return 0;
+  }
+
   const filtered = new Float32Array(filteredLength);
 
   for (let i = 0; i < filteredLength; i += 1) {
@@ -69,23 +74,48 @@ const estimateTempo = (data: Float32Array, sampleRate: number) => {
   }
 
   const effectiveSampleRate = sampleRate / step;
+  const analysisDurationSeconds = 20;
+  const analysisLength = Math.min(
+    filteredLength,
+    Math.max(2, Math.floor(effectiveSampleRate * analysisDurationSeconds))
+  );
+
+  const segment = analysisLength === filteredLength ? filtered : filtered.subarray(0, analysisLength);
+
+  let mean = 0;
+  for (let i = 0; i < analysisLength; i += 1) {
+    mean += segment[i];
+  }
+  mean /= analysisLength;
+
+  const normalized = new Float32Array(analysisLength);
+  for (let i = 0; i < analysisLength; i += 1) {
+    normalized[i] = segment[i] - mean;
+  }
+
   const minBpm = 60;
   const maxBpm = 180;
   const minLag = Math.max(1, Math.floor((effectiveSampleRate * 60) / maxBpm));
-  const maxLag = Math.min(filtered.length - 1, Math.floor((effectiveSampleRate * 60) / minBpm));
+  const maxLag = Math.min(analysisLength - 1, Math.floor((effectiveSampleRate * 60) / minBpm));
+
+  if (minLag >= maxLag) {
+    return Math.round((effectiveSampleRate * 60) / Math.max(minLag, 1));
+  }
 
   let bestLag = minLag;
-  let bestCorrelation = 0;
+  let bestCorrelation = -Infinity;
 
   for (let lag = minLag; lag <= maxLag; lag += 1) {
     let correlation = 0;
 
-    for (let i = lag; i < filtered.length; i += 1) {
-      correlation += filtered[i] * filtered[i - lag];
+    for (let i = lag; i < analysisLength; i += 1) {
+      correlation += normalized[i] * normalized[i - lag];
     }
 
-    if (correlation > bestCorrelation) {
-      bestCorrelation = correlation;
+    const normalizedCorrelation = correlation / (analysisLength - lag);
+
+    if (normalizedCorrelation > bestCorrelation) {
+      bestCorrelation = normalizedCorrelation;
       bestLag = lag;
     }
   }
