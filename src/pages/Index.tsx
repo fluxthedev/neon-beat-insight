@@ -5,6 +5,7 @@ import { TrackAnalyzer } from "@/components/TrackAnalyzer";
 import { TrackList } from "@/components/TrackList";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import { useToast } from "@/hooks/use-toast";
+import { analyzeTrack, TrackAnalysis } from "@/lib/analyze-track";
 
 interface Track {
   id: string;
@@ -12,56 +13,76 @@ interface Track {
   size: number;
 }
 
-interface TrackData {
-  id: string;
-  name: string;
-  tempo: number;
-  key: string;
-  energy: number;
-}
-
-// Mock analysis function - in production, this would call your API
-const analyzeTrack = (file: File, trackId: string): TrackData => {
-  const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const modes = ['maj', 'min'];
-  
-  return {
-    id: trackId,
-    name: file.name.replace(/\.[^/.]+$/, ''),
-    tempo: Math.floor(Math.random() * (140 - 100) + 100),
-    key: `${keys[Math.floor(Math.random() * keys.length)]} ${modes[Math.floor(Math.random() * modes.length)]}`,
-    energy: Math.floor(Math.random() * (95 - 60) + 60),
-  };
-};
+type TrackData = TrackAnalysis;
 
 const Index = () => {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [analyzedTracks, setAnalyzedTracks] = useState<TrackData[]>([]);
   const [selectedTrackId, setSelectedTrackId] = useState<string>();
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleFilesSelected = (files: File[]) => {
+  const handleFilesSelected = async (files: File[]) => {
+    if (files.length === 0) {
+      return;
+    }
+
     const newTracks: Track[] = files.map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       name: file.name,
       size: file.size,
     }));
-    
+
     setTracks(prev => [...prev, ...newTracks]);
-    
-    // Simulate analysis with matching IDs
-    const analyzed = files.map((file, index) => analyzeTrack(file, newTracks[index].id));
-    setAnalyzedTracks(prev => [...prev, ...analyzed]);
-    
+
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+
+    let latestError: string | null = null;
+
+    try {
+      const analyses = await Promise.all(
+        files.map(async (file, index) => {
+          try {
+            return await analyzeTrack(file, newTracks[index].id);
+          } catch (error) {
+            const description =
+              error instanceof Error ? error.message : 'An unexpected error occurred during analysis';
+            latestError = description;
+            setAnalysisError(description);
+            toast({
+              title: `Failed to analyze ${file.name}`,
+              description,
+              variant: "destructive",
+            });
+            return null;
+          }
+        })
+      );
+
+      const successfulAnalyses = analyses.filter((analysis): analysis is TrackData => Boolean(analysis));
+
+      if (successfulAnalyses.length > 0) {
+        setAnalyzedTracks(prev => [...prev, ...successfulAnalyses]);
+        toast({
+          title: "Tracks analyzed",
+          description: `${successfulAnalyses.length} track${successfulAnalyses.length > 1 ? 's' : ''} ready for review`,
+        });
+      }
+
+      if (!successfulAnalyses.length && files.length > 0 && !latestError) {
+        latestError = 'All analyses failed. Please try again with different files.';
+        setAnalysisError(latestError);
+      }
+    } finally {
+      setIsAnalyzing(false);
+    }
+
     // Auto-select the first uploaded track if none selected
     if (!selectedTrackId && newTracks.length > 0) {
       setSelectedTrackId(newTracks[0].id);
     }
-    
-    toast({
-      title: "Tracks uploaded",
-      description: `${files.length} track${files.length > 1 ? 's' : ''} ready for analysis`,
-    });
   };
 
   const handleRemoveTrack = (id: string) => {
@@ -83,6 +104,17 @@ const Index = () => {
           {/* Left column - Upload and Track List */}
           <div className="lg:col-span-1 space-y-4 sm:space-y-6">
             <FileUpload onFilesSelected={handleFilesSelected} />
+            {isAnalyzing && (
+              <div className="rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm text-primary flex items-center gap-2">
+                <span className="flex h-2 w-2 rounded-full bg-primary animate-ping" aria-hidden="true" />
+                <span>Analyzing audio… this may take a moment.</span>
+              </div>
+            )}
+            {analysisError && (
+              <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                {analysisError}
+              </div>
+            )}
             <TrackList
               tracks={tracks}
               onRemove={handleRemoveTrack}

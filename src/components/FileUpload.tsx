@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 interface FileUploadProps {
-  onFilesSelected: (files: File[]) => void;
+  onFilesSelected: (files: File[]) => void | Promise<void>;
 }
 
 export const FileUpload = ({ onFilesSelected }: FileUploadProps) => {
@@ -45,7 +45,7 @@ export const FileUpload = ({ onFilesSelected }: FileUploadProps) => {
       return;
     }
     
-    onFilesSelected(files);
+    void onFilesSelected(files);
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,7 +60,7 @@ export const FileUpload = ({ onFilesSelected }: FileUploadProps) => {
       return;
     }
     
-    onFilesSelected(files);
+    void onFilesSelected(files);
   };
 
   return (
